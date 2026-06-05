@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "dotnet local dev build",
+			"type": "dotnet",
+			"task": "build ${workspaceFolder}/HealthCRM.Server/HealthCRM.Server.csproj /property:GenerateFullPaths=true /p:Configuration=Debug /p:Platform=AnyCPU /consoleloggerparameters:NoSummary",
+			"file": "${workspaceFolder}/HealthCRM.Server/HealthCRM.Server.csproj",
+			"group": "build",
+			"problemMatcher": [],
+		},
+    ]
+}

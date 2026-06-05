@@ -1,11 +1,77 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState, type JSX } from 'react';
+import reactLogo from './assets/react.svg';
+import viteLogo from './assets/vite.svg';
+import heroImg from './assets/hero.png';
+import './App.css';
+
+type Forecast = {
+  date: string;
+  temperatureC: number;
+  temperatureF: number;
+  summary: string;
+};
+
+const WeatherForecast = (): JSX.Element => {
+    const [forecasts, setForecasts] = useState<Forecast[]>();
+    const [errorMsg, setErrorMsg] = useState<string>();
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const populateWeatherForecast = async () => {
+            
+            try {
+                const response = await fetch('weatherforecast', {
+                    signal: controller.signal
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setForecasts(data);
+                } else {
+                    throw (`Request failed: ${response.status} ${response.statusText}`);
+                }
+
+            } catch (error) {
+              if (error instanceof DOMException && error.name === 'AbortError') return;
+              setErrorMsg(`Could not load weather forecasts. Please try again. Error: ${error}`);
+            }
+        };
+
+        populateWeatherForecast();
+
+        return () => controller.abort();
+    }, []);
+
+  if (errorMsg) return <p>{errorMsg}</p>;
+  if (!forecasts) return <p>Weather Forecast Loading...</p>;
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Temp. (C)</th>
+          <th>Temp. (F)</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        {forecasts.map((forecast, index) => (
+          <tr key={index}>
+            <td>{new Date(forecast.date).toLocaleDateString()}</td>
+            <td>{forecast.temperatureC}</td>
+            <td>{forecast.temperatureF}</td>
+            <td>{forecast.summary}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <>
@@ -20,6 +86,7 @@ function App() {
           <p>
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
+          <WeatherForecast />
         </div>
         <button
           type="button"
@@ -119,4 +186,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
