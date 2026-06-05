@@ -13,3 +13,5 @@ Built as a portfolio project demonstrating modern full-stack architecture with:
 - **OIDC / OAuth2** — OpenID Connect authentication with role-based access control
 - **PDF Generation** — server-side document rendering
 
+## ADR Documents
+* [ADR 001 Project Initialisation](./Documentation/ADR-001-project-initialisation.md)
