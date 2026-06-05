@@ -15,3 +15,4 @@ Built as a portfolio project demonstrating modern full-stack architecture with:
 
 ## ADR Documents
 * [ADR 001 Project Initialisation](./Documentation/ADR-001-project-initialisation.md)
+* [ADR 002 Local Development Setup](./Documentation/ADR-002-local-development-setup.md)
