@@ -57,50 +57,12 @@ dotnet run -lp "https" --project HealthCRM.Server
 # Scaffold the frontend (select React, then TypeScript)
 npm create vite@latest
 ```
-
-## Alternatives Considered
-### Backend / full-stack
-- **ASP.NET Core MVC** — integrates frontend and backend into a single server, reducing hosting complexity. Ruled out because React has broader ecosystem adoption and a richer library ecosystem for building modern UIs.
-
-### Frontend
-- **Next.js / React SSR** — would improve browser performance through server-side rendering, but SSR benefits are largely around SEO and public-facing performance. Neither applies here given the application is internal-only and not publicly accessible.
-
-### Styling 
-- **Tailwind CSS / Bootstrap** — not adopted at this stage. Current work is setting up the code infrastructure rather than building UI, so plain CSS is enough for now and I already work comfortably in it. Tailwind is the intended approach once actual application building begins: having worked through its documentation, the initial unfamiliarity is no longer a blocker, and its prevalence makes it the more valuable skill to demonstrate in a portfolio project. Bootstrap was the weaker of the two on that same portfolio-value measure.
-
-## Consequences 
-- Two codebases in two languages require separate maintenance and context-switching during development.
-- Not using the React Compiler, so component state optimisation requires manual memoisation where needed.
-- Styling uses hand-written plain CSS during infrastructure setup; this is manageable given existing CSS experience, and will give way to Tailwind once UI work begins.
-- The scaffolds run over HTTP and HTTPS as generated; both front and backend need to be standardised on HTTPS, and scaffold cleanup (e.g. removing the `weatherforecast` sample) is required. These are addressed in ADR-002.
-
-## Known follow-ups 
-- Standardise both projects on HTTPS and remove the HTTP listeners — carried into ADR-002 (local development setup).
-- Remove the scaffolded `weatherforecast` sample endpoint and the default Vite template content once real features begin.
-- Select a database and record that decision in a later ADR.
-- Implement Tailwind CSS when application building begins, migrating any plain CSS written during infrastructure setup.
-
-## Commands reference
-```bash
-# Trust the local dev HTTPS certificate (one-time, per machine)
-dotnet dev-certs https --trust
- 
-# Scaffold the backend (controller-based Web API)
-dotnet new webapi --use-controllers -o HealthCRM.Server
- 
-# Run the backend over HTTPS
-dotnet run -lp "https" --project HealthCRM.Server
- 
-# Scaffold the frontend (select React, then TypeScript)
-npm create vite@latest
-```
  
 ## References
 - [Tutorial: Create a controller-based web API with ASP.NET Core | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-10.0&tabs=visual-studio-code)
 - [Generate OpenAPI documents | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0&tabs=net-cli%2Cvisual-studio-code)
 - [Getting Started | Vite](https://vite.dev/guide/)
 - [Node.js](https://nodejs.org/en)
- k
 - [Tutorial: Create a controller-based web API with ASP.NET Core | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-10.0&tabs=visual-studio-code)
 - [Generate OpenAPI documents | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0&tabs=net-cli%2Cvisual-studio-code)
 - [Getting Started | Vite](https://vite.dev/guide/)
