@@ -63,8 +63,3 @@ npm create vite@latest
 - [Generate OpenAPI documents | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0&tabs=net-cli%2Cvisual-studio-code)
 - [Getting Started | Vite](https://vite.dev/guide/)
 - [Node.js](https://nodejs.org/en)
-- [Tutorial: Create a controller-based web API with ASP.NET Core | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-10.0&tabs=visual-studio-code)
-- [Generate OpenAPI documents | Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0&tabs=net-cli%2Cvisual-studio-code)
-- [Getting Started | Vite](https://vite.dev/guide/)
-- [Node.js](https://nodejs.org/en)
- 
