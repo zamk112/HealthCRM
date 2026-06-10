@@ -1,3 +1,4 @@
+using HealthCRM.Server.Extensions;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
 
@@ -7,17 +8,19 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
     .CreateBootstrapLogger();
+
 try
 {
+
+    builder.WebHost.ConfigureKestrelHttpsDefaults(builder.Configuration, builder.Environment);
+
     builder.Services.AddSerilog((services, lc) => lc
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
     );
-
-    builder.Services.AddControllers();
     
-    if (builder.Environment.IsDevelopment())
+    if (builder.Environment.IsDevelopment() || builder.Environment.IsStaging())
     {
         builder.Services.AddHttpLogging(o => { 
             o.LoggingFields = HttpLoggingFields.All; 
@@ -29,17 +32,29 @@ try
             o.RequestHeaders.Add("sec-fetch-mode");
             o.RequestHeaders.Add("sec-fetch-dest");
             o.RequestHeaders.Add("priority");
-        });    
-        
+            o.RequestHeaders.Add("X-Forwarded-For");
+            o.RequestHeaders.Add("X-Forwarded-Proto");
+            o.RequestHeaders.Add("X-Original-For");
+            o.RequestHeaders.Add("X-Original-Proto");
+        });
+
         builder.Services.AddOpenApi();
     }
 
+    builder.Services.AddForwardHeaderOptionsConfiguration(builder.Configuration, builder.Environment);
+    
+    builder.Services.AddControllers();
+    
     var app = builder.Build();
-
+    
+    app.UseForwardedHeaders();
     app.UseSerilogRequestLogging();
-    Log.Information("Application Started and Logging Started");
+    
+    Log.Information("Application started! Logging to both console and/or file.");
+    
+    app.LogForwardHeaderOptionsConfiguration();
 
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         app.UseHttpLogging();
         app.MapOpenApi();
