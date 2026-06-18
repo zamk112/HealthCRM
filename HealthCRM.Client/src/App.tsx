@@ -21,7 +21,7 @@ const WeatherForecast = (): JSX.Element => {
         const populateWeatherForecast = async () => {
             
             try {
-                const response = await fetch('weatherforecast', {
+                const response = await fetch('api/weatherforecast', {
                     signal: controller.signal
                 });
 

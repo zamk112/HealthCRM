@@ -13,13 +13,15 @@ public static class KestrelConfigurationExtensions
         webHostBuilder.ConfigureKestrel((context, serverOptions) =>
         {
 
-            var httpsConfiguration = configuration.GetSection("Kestrel:Server:Https");
+            var serverSection = configuration.GetSection("Kestrel:Server");
 
             serverOptions.ConfigureHttpsDefaults(httpsOptions =>
             {
+                var httpsConfiguration = serverSection.GetSection("Https");
+
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !hostEnvironment.IsDevelopment())
                     httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
-               
+
                 if (httpsConfiguration.GetValue<long?>("HandshakeTimeout") is long seconds)
                     httpsOptions.HandshakeTimeout = TimeSpan.FromSeconds(seconds);
 
@@ -57,10 +59,10 @@ public static class KestrelConfigurationExtensions
 
             serverOptions.ConfigureEndpointDefaults(endpointOptions =>
             {
-                endpointOptions.Protocols = HttpProtocols.Http1AndHttp2;       
+                endpointOptions.Protocols = HttpProtocols.Http1AndHttp2;
             });
 
-            var serverLimits = httpsConfiguration.GetSection("Limits");
+            var serverLimits = serverSection.GetSection("Limits");
 
             if (serverLimits.GetValue<long?>("MaxConcurrentConnections") is long maxConcurrentConnections)
                  serverOptions.Limits.MaxConcurrentConnections = maxConcurrentConnections;

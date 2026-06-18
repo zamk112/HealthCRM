@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import os from 'node:os';
 import https from 'node:https';
 
-const target = `https://localhost:7186`;
+const target = "https://localhost:7186";
 
 export default defineConfig(({ command }) => {
   const certName = 'HealthCRM.Client';
@@ -26,7 +26,7 @@ export default defineConfig(({ command }) => {
         cert: readFileSync(certPath)
       },
       proxy: {
-        '^/weatherforecast': {
+        '^/api': {
           target: target,
           secure: true,
           agent: new https.Agent({
