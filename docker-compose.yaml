@@ -1,0 +1,111 @@
+services:
+  server:
+    image: healthcrm.server
+    env_file:
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.env
+    pull_policy: build
+    build:
+      context: ./HealthCRM.Server
+      dockerfile: Dockerfile
+    container_name: server
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    mem_reservation: 256M
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 4096
+    environment:
+      - ASPNETCORE_URLS=https://+:5229
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/HealthCRM.Server.pfx
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - SSLKEYLOGFILE=/Captures/kestrel-keys.log
+    volumes:
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.pfx:/https/HealthCRM.Server.pfx:ro
+      - ${HOME}/Projects/HealthCRM/HealthCRM.Server/appsettings.Staging.json:/app/appsettings.Staging.json:ro
+      - ${HOME}/Projects/HealthCRM/HealthCRM.Server/Logs:/app/Logs
+      - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures 
+    networks:
+      healthcrm-network:
+        ipv4_address: 10.0.0.3
+        aliases:
+          - healthcrm.api.local
+  
+  client:
+    image: healthcrm.client
+    pull_policy: build
+    build: 
+      context: ./HealthCRM.Client
+      dockerfile: Dockerfile
+    container_name: client
+    depends_on:
+      - server
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ${HOME}/Projects/HealthCRM/HealthCRM.Client/staging.nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.key:/etc/nginx/certs/HealthCRM.Client.key:ro
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.pem:/etc/nginx/certs/HealthCRM.Client.pem:ro
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/etc/nginx/certs/HealthCRM.CA.pem:ro
+      - ${HOME}/Projects/HealthCRM/HealthCRM.Client/Logs:/var/log/nginx
+    networks:
+      healthcrm-network:
+        ipv4_address: 10.0.0.2
+        aliases:
+          - HealthCRM.local
+
+  client.debug:
+    image: healthcrm.debug
+    pull_policy: build
+    build:
+      context: ./HealthCRM.DockerDebugging
+      dockerfile: Dockerfile
+    container_name: client.debug
+    network_mode: "service:client"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/https/HealthCRM.CA.pem:ro
+      - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures
+    command: sleep infinity
+    depends_on:
+      - client
+    profiles:
+      - debug
+  
+  server.debug:
+    image: healthcrm.debug
+    pull_policy: build
+    build:
+      context: ./HealthCRM.DockerDebugging
+      dockerfile: Dockerfile
+    container_name: server.debug
+    network_mode: "service:server"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/https/HealthCRM.CA.pem:ro
+      - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures
+    command: sleep infinity
+    depends_on:
+      - server
+    profiles:
+      - debug
+
+networks:
+  healthcrm-network:
+    name: healthcrm-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - { subnet: 10.0.0.0/28, gateway: 10.0.0.1 }

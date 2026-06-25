@@ -12,7 +12,13 @@
       }
     ],
     "configProperties": {
-      "System.GC.Server": true,
+      "System.GC.Server": false,
+      "System.GC.Concurrent": true,
+      "System.GC.ConserveMemory": 5,
+      "System.GC.RetainVM": false,
+      "System.Runtime.TieredCompilation": true,
+      "System.Runtime.TieredPGO": true,
+      "System.Threading.ThreadPool.MinThreads": 2,
       "System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
       "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
       "System.Net.EnableSslKeyLogging": true
