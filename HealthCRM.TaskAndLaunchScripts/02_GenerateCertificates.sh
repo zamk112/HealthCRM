@@ -31,7 +31,7 @@ source "$ScriptDir/00_SharedConstantsAndFunctions.sh"
 
 ConfigFullPathNames=()
 CertFullPathNames=()
-FullReload=1
+FullReload=false
 
 CaConfigPath="" 
 CaCertPath=""
@@ -56,7 +56,7 @@ while getopts ":c:f:rhv" opt; do
         f) cleaned="${OPTARG// /}"
            IFS=',' read -ra newNames <<< "$cleaned"
            CertFullPathNames+=("${newNames[@]}") ;;
-        r) FullReload=0 ;;
+        r) FullReload=true ;;
         h) usage ; exit "$EXIT_OK" ;;
         v) ((LOG_LEVEL++)) ;;
         \?) echo "Unknown Flag: -$OPTARG" >&2; usage >&2 ; exit "$EXIT_USAGE_ERROR" ;;
@@ -243,15 +243,15 @@ delete_certificate_files \
     "$ServerEnvPath" \
     "$ClientCertPath" 
 
-if $FullReload; then
-LOG_STEP "Deleting Certificate Key."
-delete_certificate_files \
-    "$CaKeyPath" \
-    "$CaSrlPath" \
-    "$ServerCSRPath" \
-    "$ServerKeyPath" \
-    "$ClientCSRPath" \
-    "$ClientKeyPath"
+if [ "$FullReload" = true ]; then
+    LOG_STEP "Deleting Certificate Key, CSR and CA SRL file(s)."
+    delete_certificate_files \
+        "$CaKeyPath" \
+        "$CaSrlPath" \
+        "$ServerCSRPath" \
+        "$ServerKeyPath" \
+        "$ClientCSRPath" \
+        "$ClientKeyPath"
 fi
 
 if [[ "$KERNEL" == "darwin" ]] && security find-certificate -c "$CaCommonName" /Library/Keychains/System.keychain >/dev/null 2>&1; then
@@ -275,7 +275,7 @@ LOG_STEP "Generating Certificates."
 read -rsp "Enter Certificate password: " Password
 echo
 
-if [[ -f "$CaKeyPath" ]] && ((FullReload == 1)); then 
+if [[ -f "$CaKeyPath" ]] && [ "$FullReload" = false ]; then 
     LOG_INFO "CA Certificate Private Already Exists. Skipping CA Private Key Generation."
 else
     LOG_STEP "Generating RSA Private Key for CA Certificate With File Name: '${CaKeyPath##*/}'"
@@ -310,7 +310,7 @@ else
     LOG_WARN "Please Make Sure to Add Your CA Certificate '${CaCertPath##*/}' To The Relevant Certificate Store/Application."
 fi
 
-if [[ -f "$ServerKeyPath" ]] && ((FullReload == 1)); then
+if [[ -f "$ServerKeyPath" ]] && [ "$FullReload" = false ]; then
     LOG_INFO "Server Private Key Already Exists. Skipping Server Private Key Generation."
 else
     LOG_STEP "Generating Server Private Key '${ServerKeyPath##*/}' And CSR '${ServerCSRPath##*/}'."
@@ -352,7 +352,7 @@ chmod 600 "$ServerEnvPath"
 echo "ASPNETCORE_Kestrel__Certificates__Default__Password=$Password" > "$ServerEnvPath"
 LOG_SUCCESS "Exported PFX Certificate Password To File Name '${ServerEnvPath##*/}' Completed."
 
-if [[ -f "$ClientKeyPath" ]] && ((FullReload == 1)); then
+if [[ -f "$ClientKeyPath" ]] && [ "$FullReload" = false ]; then
     LOG_INFO "Client Private Key Already Exists. Skipping Client Private Key Generation."
 else
     LOG_STEP "Generating Client Private Key '${ClientKeyPath##*/}' And CSR '${ClientCSRPath##*/}'."

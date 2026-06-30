@@ -27,10 +27,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Staging
       - SSLKEYLOGFILE=/Captures/kestrel-keys.log
     volumes:
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.pfx:/https/HealthCRM.Server.pfx:ro
-      - ${HOME}/Projects/HealthCRM/HealthCRM.Server/appsettings.Staging.json:/app/appsettings.Staging.json:ro
       - ${HOME}/Projects/HealthCRM/HealthCRM.Server/Logs:/app/Logs
       - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures 
+    configs:
+      - { source: server_appsettings, target: /app/appsettings.Staging.json }
+    secrets:
+      - { source: server_pfx, target: /https/HealthCRM.Server.pfx }
     networks:
       healthcrm-network:
         ipv4_address: 10.0.0.3
@@ -50,16 +52,18 @@ services:
       - "443:443"
       - "80:80"
     volumes:
-      - ${HOME}/Projects/HealthCRM/HealthCRM.Client/staging.nginx.conf:/etc/nginx/nginx.conf:ro
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.key:/etc/nginx/certs/HealthCRM.Client.key:ro
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.pem:/etc/nginx/certs/HealthCRM.Client.pem:ro
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/etc/nginx/certs/HealthCRM.CA.pem:ro
       - ${HOME}/Projects/HealthCRM/HealthCRM.Client/Logs:/var/log/nginx
+    configs:
+      - { source: nginx_conf, target: /etc/nginx/nginx.conf }
+    secrets:
+      - { source: client_key, target: /etc/nginx/certs/HealthCRM.Client.key }
+      - { source: client_pem, target: /etc/nginx/certs/HealthCRM.Client.pem }
+      - { source: ca_pem, target: /etc/nginx/certs/HealthCRM.CA.pem }
     networks:
       healthcrm-network:
         ipv4_address: 10.0.0.2
         aliases:
-          - HealthCRM.local
+          - healthcrm.local
 
   client.debug:
     image: healthcrm.debug
@@ -73,8 +77,9 @@ services:
       - NET_ADMIN
       - NET_RAW
     volumes:
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/https/HealthCRM.CA.pem:ro
       - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures
+    secrets:
+      - { source: ca_pem, target: HealthCRM.CA.pem }
     command: sleep infinity
     depends_on:
       - client
@@ -93,8 +98,9 @@ services:
       - NET_ADMIN
       - NET_RAW
     volumes:
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem:/https/HealthCRM.CA.pem:ro
       - ${HOME}/Projects/HealthCRM/HealthCRM.DockerDebugging/Captures:/Captures
+    secrets:
+      - { source: ca_pem, target: HealthCRM.CA.pem }
     command: sleep infinity
     depends_on:
       - server
@@ -109,3 +115,19 @@ networks:
       driver: default
       config:
         - { subnet: 10.0.0.0/28, gateway: 10.0.0.1 }
+
+configs:
+  nginx_conf:
+    file: ${HOME}/Projects/HealthCRM/HealthCRM.Client/staging.nginx.conf
+  server_appsettings:
+    file: ${HOME}/Projects/HealthCRM/HealthCRM.Server/appsettings.Staging.json
+
+secrets:
+  client_key:
+    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.key
+  client_pem:
+    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.pem
+  ca_pem:
+    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem
+  server_pfx:
+    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.pfx
