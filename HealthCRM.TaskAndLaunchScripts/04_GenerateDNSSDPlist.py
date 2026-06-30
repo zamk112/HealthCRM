@@ -14,12 +14,12 @@ class DNSSDLaunchDaemonConfig:
         self.application_layer = application_layer
         self.transmission_layer = transmission_layer
         self.domain = domain
-        self.port = port
+        self.port = int(port)
         self.hostname = hostname
         self.log_dir = log_dir
         self.address = address
-        self.run_at_load = run_at_load
-        self.keep_alive = keep_alive
+        self.run_at_load = bool(run_at_load)
+        self.keep_alive = bool(keep_alive)
 
     def to_dict(self) -> dict:
         return {
