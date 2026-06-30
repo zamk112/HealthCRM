@@ -53,13 +53,13 @@ class DNSSDLaunchDaemonConfig:
         return plistlib.dumps(self.__to_dict()).decode()
     
 class _ValidateLogDir(argparse.Action):
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: str, option_string: str | None = None):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: str, option_string: str | None = None) -> None:
         if not _is_valid_path(values):
             raise argparse.ArgumentError(self, f"{values} does not exist.")
         setattr(namespace, self.dest, values)
 
 class _ValidateIPv4(argparse.Action):
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: str, option_string: str | None = None):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: str, option_string: str | None = None) -> None:
         if not _is_valid_ipv4(values):
             raise argparse.ArgumentError(self, f"{values} needs to follow IPv4 format.")
         setattr(namespace, self.dest, values)
