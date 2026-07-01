@@ -2,7 +2,7 @@ services:
   server:
     image: healthcrm.server
     env_file:
-      - ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.env
+      - ${HOME}/Workspaces/HealthCRM/HealthCRM.Server.env
     pull_policy: build
     build:
       context: ./HealthCRM.Server
@@ -124,10 +124,10 @@ configs:
 
 secrets:
   client_key:
-    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.key
+    file: ${HOME}/Workspaces/HealthCRM/HealthCRM.Client.key
   client_pem:
-    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Client.pem
+    file: ${HOME}/Workspaces/HealthCRM/HealthCRM.Client.pem
   ca_pem:
-    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.CA.pem
+    file: ${HOME}/Workspaces/HealthCRM/HealthCRM.CA.pem
   server_pfx:
-    file: ${HOME}/Workspaces/Certs/HealthCRM/HealthCRM.Server.pfx
+    file: ${HOME}/Workspaces/HealthCRM/HealthCRM.Server.pfx

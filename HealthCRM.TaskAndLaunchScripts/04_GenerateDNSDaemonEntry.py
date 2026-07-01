@@ -30,7 +30,7 @@ class DNSSDLaunchDaemonConfig:
         self.run_at_load = bool(run_at_load)
         self.keep_alive = bool(keep_alive)
 
-    def __to_dict(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "Label": self.label.lower(),
             "ProgramArguments": [
@@ -50,7 +50,7 @@ class DNSSDLaunchDaemonConfig:
         }
     
     def __str__(self) -> str:
-        return plistlib.dumps(self.__to_dict()).decode()
+        return plistlib.dumps(self.to_dict()).decode()
     
 class _ValidateLogDir(argparse.Action):
     def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: str, option_string: str | None = None) -> None:
@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-a", "--application-layer", required=True, help="e.g. http or https")
     parser.add_argument("-t", "--transmission-layer", required=True, help="e.g. tcp or udp")
     parser.add_argument("-d", "--domain", required=True, help="e.g. local")
-    parser.add_argument("-p", "--port", type=int, action=_ValidatePort, required=True, help="e.g. 443")
+    parser.add_argument("-p", "--port", type=int, default=443, action=_ValidatePort, required=True, help="e.g. 443")
     parser.add_argument("-o", "--hostname", required=True, help="e.g. healthcrm.local")
     parser.add_argument("-g", "--log-dir", action=_ValidateLogDir, required=True, help="Directory for stdout/stderr log files")
     parser.add_argument("-i", "--address", default="127.0.0.1", action=_ValidateIPv4, help="IP Address (default: 127.0.0.1)")
