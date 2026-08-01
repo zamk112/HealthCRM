@@ -9,13 +9,14 @@ usage() {
 }
 
 config_has_section() {
-    local configFile=$1
-    local sectionName=$2
+    local configFile=${1:?config_has_section: Config File value is missing from position 1.}
+    local sectionName=${2:?config_has_section: Section Name value is missing from position 2.}
     grep -qE "^\[[[:space:]]*${sectionName}[[:space:]]*\]" "$configFile"
 }
 
 delete_certificate_files()
 {
+    : "${1?delete_certificate_files: Array containing file path is missing from position 1.}"
     local file
     for file in "$@"; do
         if [[ -f "$file" ]]; then

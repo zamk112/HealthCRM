@@ -7,8 +7,8 @@ usage() {
 
 check_etc_hosts()
 {
-	local ipAddress=$1
-	local hostName=$2
+	local ipAddress=${1:?check_etc_hosts: IP Address is missing at position 1.}
+	local hostName=${2:?check_etc_hosts: Hostname is missing at position 2.}
 	if grep -E "^${ipAddress}[[:space:]]+$hostName$" "/etc/hosts" >/dev/null 2>&1; then
 		LOG_SUCCESS "DNS entry in /etc/hosts file detected."
 		exit "${EXIT_OK}"
@@ -20,10 +20,14 @@ check_etc_hosts()
 
 check_plist_args()
 {
-	local needle="$1"
+	: "${1:?check_plist_args: needle value is missing from position 1.}"
+	: "${2?check_plist_args: plistArray value is missing from position 2.}"
+	local needle=$1
 	shift
+	local plistArray=("$@")
+
 	local item
-	for item in "$@"; do 
+	for item in "${plistArray[@]}"; do 
 		LOG_DEBUG "Comparing needle: '$needle' with item: '$item'"
 		[[ "$item" == "$needle" ]] && return 0
 	done
@@ -31,33 +35,90 @@ check_plist_args()
 	return 1
 }
 
-check_dns_sd_service_is_running()
+pgrep_zero_dns_conf_check()
 {
-	local ipAddress=$1
-	local hostName=$2
-	local matchExistingConfig=$3
+	local ipAddress=${1:?pgrep_zero_dns_conf_check: IP Address is missing at position 1.}
+	local hostName=${2:?pgrep_zero_dns_conf_check: Hostname is missing at position 2.}
+	local serviceName=${3:-}
+	local type=${4:-}
+	local domainName=${5:-}
+	local portNumber=${6:-}
 
-	
-	pgrepExit=0
-	pgrepStdOut=$(pgrep -fl "^/usr/bin/dns-sd -P .+ $hostName $ipAddress$" 2>/tmp/pgrep.$$.stderr) || pgrepExit=$?
+	local pgrepExit=0
+	local pgrepStdOut=""
+	local pgrepStdErr=""
+
+	LOG_DEBUG "IP Address: '$ipAddress'"
+	LOG_DEBUG "Host Name: '$hostName'"
+	LOG_DEBUG "Service Name: '$serviceName'"
+	LOG_DEBUG "Type: '$type'"
+	LOG_DEBUG "Domain Name: '$domainName'"
+	LOG_DEBUG "Port Number: '$portNumber'"
+
+	if [[ -n $serviceName && -n $type && -n $domainName && -n $portNumber ]]; then
+		LOG_VERBOSE "Executing pgrep to check if dns-sd service is running with all parameters provided."
+		pgrepStdOut=$(pgrep -fl "^/usr/bin/dns-sd -P $serviceName $type $domainName $portNumber $hostName $ipAddress$" 2>/tmp/pgrep.$$.stderr) || pgrepExit=$?
+	else
+		LOG_VERBOSE "Executing pgrep to check if dns-sd service is running with IP address and hostname."
+		pgrepStdOut=$(pgrep -fl "^/usr/bin/dns-sd -P .+ $hostName $ipAddress$" 2>/tmp/pgrep.$$.stderr) || pgrepExit=$?
+	fi
+
 	pgrepStdErr=$(cat /tmp/pgrep.$$.stderr; rm -f /tmp/pgrep.$$.stderr)
 
 	LOG_DEBUG "pgrep Status Code: $pgrepExit"
 	LOG_DEBUG "pgrep StdOut Stream: $pgrepStdOut"
 	LOG_DEBUG "pgrep StdErr Stream: $pgrepStdErr"	
+	
+	printf '%s;%s;%s' "$pgrepExit" "$pgrepStdOut" "$pgrepStdErr"
+}
 
+check_dns_sd_service_is_running()
+{
+	local ipAddress=${1?check_dns_sd_service_is_running: IP Address is missing at position 1.}
+	local hostName=${2?check_dns_sd_service_is_running: Hostname is missing at position 2.}
+	local serviceName=${3:-}
+	local type=${4:-}
+	local domainName=${5:-}
+	local portNumber=${6:-}
+
+	local pgrepExit=0
+	local pgrepStdOut=""
+	local pgrepStdErr=""
+
+	LOG_DEBUG "IP Address: '$ipAddress'"
+	LOG_DEBUG "Host Name: '$hostName'"
+	LOG_DEBUG "Service Name: '$serviceName'"
+	LOG_DEBUG "Type: '$type'"
+	LOG_DEBUG "Domain Name: '$domainName'"
+	LOG_DEBUG "Port Number: '$portNumber'"
+
+	if [[ -n $serviceName && -n $type && -n $domainName && -n $portNumber ]]; then
+		LOG_VERBOSE "Reading in and storing pgrep output with all parameters provided."
+		IFS=';' read -rd '' pgrepExit pgrepStdOut pgrepStdErr < <(pgrep_zero_dns_conf_check "$ipAddress" "$hostName" "$serviceName" "$type" "$domainName" "$portNumber") || true
+	else
+		LOG_VERBOSE "Reading in and storing pgrep output with only IP Address and Host Name."
+		IFS=';' read -rd '' pgrepExit pgrepStdOut pgrepStdErr < <(pgrep_zero_dns_conf_check "$ipAddress" "$hostName") || true
+	fi
+
+	LOG_VERBOSE "Checking pgrep outputs."
 	if [[ -n "$pgrepStdErr" ]]; then
 		LOG_ERROR "pgrep error: $pgrepStdErr"
 		exit "${EXIT_ENV_ERROR}"
 	elif [[ "$pgrepExit" -eq 0 && -n "$pgrepStdOut" ]]; then
-		if [[ -n $matchExistingConfig && $matchExistingConfig = "true" ]]; then
-			LOG_SUCCESS "dns-sd service is running."
-		else
-			LOG_WARN "dns-sd is running, see output: '$pgrepStdOut'"
-		fi
+		LOG_SUCCESS "dns-sd service is running: See output: '$pgrepStdOut'."
 		return 0
 	elif [[ "$pgrepExit" -eq 1 ]]; then
-		LOG_WARN "dns-sd process was not found for $hostName."
+		if [[ -n $serviceName && -n $type && -n $domainName && -n $portNumber ]]; then
+			LOG_WARN "Unable to find by Service Name: '$serviceName', Type: '$type', Domain Name: '$domainName' and by Port Number: '$portNumber'. Checking with only IP Address and Host."
+			IFS=';' read -rd '' pgrepExit pgrepStdOut pgrepStdErr < <(pgrep_zero_dns_conf_check "$ipAddress" "$hostName") || true
+			if [[ "$pgrepExit" -eq 0 && -n "$pgrepStdOut" ]]; then
+				LOG_WARN "dns-sd process is running, but under different configuration, see: '$pgrepStdOut'"
+			else 
+				LOG_WARN "dns-sd process was not found for $hostName."
+			fi
+		else
+			LOG_WARN "dns-sd process was not found for $hostName."
+		fi
 		return 1
 	else
 		LOG_ERROR "pgrep exited with unexpected code: $pgrepExit"
@@ -314,7 +375,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 			if [ "$matchesOldConfig" = true ]; then
 				LOG_SUCCESS "Input config matches current config."
 				LOG_STEP "Checking if dns-sd Service is running."
-				check_dns_sd_service_is_running "$IpAddress" "$HostName" true
+				check_dns_sd_service_is_running "$IpAddress" "$HostName" "$ServiceName" "_${ApplicationLayer}._${TransportLayer}" "$DomainName" "$PortNumber"
 				exit "${EXIT_OK_NO_CONFIG_CHANGE}"
 			fi
 			LOG_INFO "'matchesOldConfig' config is completed."
@@ -398,8 +459,8 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		fi
 		LOG_INFO "Validation of input Port Number check is completed."
 
-		LOG_VERBOSE "If config is not malformed, check if there's a dns-sd service running."
 		if [ $configMalformed = false ]; then
+			LOG_VERBOSE "If config is not malformed, check if there's a dns-sd service running."
 			check_dns_sd_service_is_running "$IpAddress" "$HostName"
 		fi
 	else

@@ -6,7 +6,7 @@ usage() {
 }
 
 parse_cert_expiry_date() {
-    local expiryDate=$1
+    local expiryDate=${1:?parse_cert_expiry_date: Expiry Date is missing from position 1.}
     case "$KERNEL" in
         darwin)
             date -j -f "%b %e %H:%M:%S %Y %Z" "$expiryDate" "+%s" 2>/dev/null
