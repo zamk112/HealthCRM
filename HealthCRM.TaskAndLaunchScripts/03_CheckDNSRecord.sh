@@ -231,7 +231,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_WARN "Using defaulted value of Keep Alive: '$KeepAlive'."
 		fi
-		LOG_INFO "Checking Keep Alive values complete."
+		LOG_INFO "Checking Keep Alive value complete."
 
 		LOG_VERBOSE "Extracting Run At Load value from plist XML output."
 		runAtLoad=$(echo "$plistXmlOutput" | xmllint --xpath 'name(/plist/dict/key[text()="RunAtLoad"]/following-sibling::*[1])' -)
@@ -249,7 +249,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_WARN "Using defaulted value of Run At Load: '$RunAtLoad'."
 		fi
-		LOG_INFO "Checking Run At Load values completed."
+		LOG_INFO "Checking Run At Load value completed."
 
 		LOG_VERBOSE "Extracting Standard Out Path value from plist XML output."
 		standardOutPath=$(echo "$plistXmlOutput" | xmllint --xpath 'string(/plist/dict/key[text()="StandardOutPath"]/following-sibling::*[1])' -)
@@ -275,7 +275,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_WARN "Unable to retrieve Config Standard Out Path from current config file."
 		fi
-		LOG_INFO "Checking Standard Out Path values completed."
+		LOG_INFO "Checking Standard Out Path value completed."
 
 		LOG_VERBOSE "Extracting Standard Error Path value from plist XML output."
 		standardErrorPath=$(echo "$plistXmlOutput" | xmllint --xpath 'string(/plist/dict/key[text()="StandardErrorPath"]/following-sibling::*[1])' -)
@@ -301,7 +301,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_WARN "Unable to retrieve Config Standard Error Path from current config file."
 		fi
-		LOG_INFO "Checking Standard Error Path values completed."
+		LOG_INFO "Checking Standard Error Path value completed."
 
 		LOG_VERBOSE "Checking Config Program Arguments Array"
 		configProgramArgumentsArr=()
@@ -316,7 +316,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_VERBOSE "Constructing Argument Array from Input Values." 
 			inputProgramArgumentsArr=(
-				"$ServiceName"
+				"$(echo "$ServiceName" | tr "[:upper:]" "[:lower:]")"
 				"_${ApplicationLayer}._${TransportLayer}"
 				"$DomainName"
 				"$PortNumber"
@@ -375,7 +375,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 			if [ "$matchesOldConfig" = true ]; then
 				LOG_SUCCESS "Input config matches current config."
 				LOG_STEP "Checking if dns-sd Service is running."
-				check_dns_sd_service_is_running "$IpAddress" "$HostName" "$ServiceName" "_${ApplicationLayer}._${TransportLayer}" "$DomainName" "$PortNumber"
+				check_dns_sd_service_is_running "$IpAddress" "$HostName" "$(echo "$ServiceName" | tr "[:upper:]" "[:lower:]")" "_${ApplicationLayer}._${TransportLayer}" "$DomainName" "$PortNumber"
 				exit "${EXIT_OK_NO_CONFIG_CHANGE}"
 			fi
 			LOG_INFO "'matchesOldConfig' config is completed."
