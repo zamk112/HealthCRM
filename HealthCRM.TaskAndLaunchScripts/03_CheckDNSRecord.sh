@@ -9,9 +9,9 @@ check_etc_hosts()
 {
 	local ipAddress=${1:?check_etc_hosts: IP Address is missing at position 1.}
 	local hostName=${2:?check_etc_hosts: Hostname is missing at position 2.}
-	if grep -E "^${ipAddress}[[:space:]]+$hostName$" "/etc/hosts" >/dev/null 2>&1; then
+	if grep -E "^${ipAddress}[[:space:]]+$hostName$" "$ETC_HOSTS_PATH" >/dev/null 2>&1; then
 		LOG_SUCCESS "DNS entry in /etc/hosts file detected."
-		exit "${EXIT_OK}"
+		exit "${EXIT_OK_NO_CONFIG_CHANGE}"
 	else
 		LOG_WARN "DNS entry for $hostName is not bound to any particular service."
 		exit "${EXIT_MISSING_DNS_ENTRY}"
@@ -74,8 +74,8 @@ pgrep_zero_dns_conf_check()
 
 check_dns_sd_service_is_running()
 {
-	local ipAddress=${1?check_dns_sd_service_is_running: IP Address is missing at position 1.}
-	local hostName=${2?check_dns_sd_service_is_running: Hostname is missing at position 2.}
+	local ipAddress=${1:?check_dns_sd_service_is_running: IP Address is missing at position 1.}
+	local hostName=${2:?check_dns_sd_service_is_running: Hostname is missing at position 2.}
 	local serviceName=${3:-}
 	local type=${4:-}
 	local domainName=${5:-}

@@ -17,7 +17,7 @@ def _is_valid_port_range(port: int) -> bool:
 class DNSSDLaunchDaemonConfig:
     DNS_SD_PATH: str = "/usr/bin/dns-sd"
 
-    def __init__(self, label: str, service_name: str, application_layer: str, transmission_layer: str, domain: str, port: int, hostname: str, log_dir: str, address: str, run_at_load: bool, keep_alive: bool) -> None:
+    def __init__(self, label: str, service_name: str, application_layer: str, transmission_layer: str, domain: str, port: int, hostname: str, standard_out_path: str, standard_error_path:str, address: str, run_at_load: bool, keep_alive: bool) -> None:
         self.label = str(label)
         self.service_name = str(service_name)
         self.application_layer = str(application_layer)
@@ -25,7 +25,8 @@ class DNSSDLaunchDaemonConfig:
         self.domain = str(domain)
         self.port = int(port)
         self.hostname = str(hostname)
-        self.log_dir = str(log_dir)
+        self.standard_out_path = str(standard_out_path)
+        self.standard_error_path = str(standard_error_path)
         self.address = str(address)
         self.run_at_load = bool(run_at_load)
         self.keep_alive = bool(keep_alive)
@@ -45,8 +46,8 @@ class DNSSDLaunchDaemonConfig:
             ],
             "RunAtLoad": self.run_at_load,
             "KeepAlive": self.keep_alive,
-            "StandardOutPath": str(self.log_dir + f"/{self.label.lower().replace('.', '-')}.log"),
-            "StandardErrorPath": str(self.log_dir + f"/{self.label.lower().replace('.', '-')}-error.log")
+            "StandardOutPath": str(self.standard_out_path + f"/{self.label.lower().replace('.', '-')}.log"),
+            "StandardErrorPath": str(self.standard_out_path + f"/{self.label.lower().replace('.', '-')}-error.log")
         }
     
     def __str__(self) -> str:
@@ -74,13 +75,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a launchd plist for a dns-sd service registration")
     
     parser.add_argument("-l", "--label", required=True, help="launchd Label, e.g. com.healthcrm.local.mdns")
-    parser.add_argument("-n", "--service-name", required=True, help="DNS-SD Service name, e.g. HealthCRM")
+    parser.add_argument("-s", "--service-name", required=True, help="DNS-SD Service name, e.g. HealthCRM")
     parser.add_argument("-a", "--application-layer", required=True, help="e.g. http or https")
     parser.add_argument("-t", "--transmission-layer", required=True, help="e.g. tcp or udp")
     parser.add_argument("-d", "--domain", required=True, help="e.g. local")
     parser.add_argument("-p", "--port", type=int, default=443, action=_ValidatePort, required=True, help="e.g. 443")
     parser.add_argument("-o", "--hostname", required=True, help="e.g. healthcrm.local")
-    parser.add_argument("-g", "--log-dir", action=_ValidateLogDir, required=True, help="Directory for stdout/stderr log files")
+    parser.add_argument("-e", "--standard-error-path", action=_ValidateLogDir, required=True, help="Directory for standard error path")
+    parser.add_argument("-f", "--standard-out-path", action=_ValidateLogDir, required=True, help="Directory for standard out path")
     parser.add_argument("-i", "--address", default="127.0.0.1", action=_ValidateIPv4, help="IP Address (default: 127.0.0.1)")
     parser.add_argument("--run-at-load", default=True, action=argparse.BooleanOptionalAction, help="Whether launchd should run the daemon at load time (default: True)")
     parser.add_argument("--keep-alive", default=True, action=argparse.BooleanOptionalAction, help="Whether launchd should keep the daemon alive / restart it (default: True)")
@@ -98,7 +100,8 @@ if __name__ == "__main__":
         domain=args.domain,
         port=args.port,
         hostname=args.hostname,
-        log_dir=args.log_dir,
+        standard_error_path=args.standard_error_path,
+        standard_out_path=args.standard_out_path,
         address=args.address,
         run_at_load=args.run_at_load,
         keep_alive=args.keep_alive

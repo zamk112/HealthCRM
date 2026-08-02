@@ -33,6 +33,7 @@ readonly LOG_LEVEL_DEBUG=4
 LOG_LEVEL=${LOG_LEVEL:-$LOG_LEVEL_INFO}
 
 readonly LAUNCH_DAEMONS_DIRECTORY_PATH="/Library/LaunchDaemons/"
+readonly ETC_HOSTS_PATH="/etc/hosts"
 
 CHECK_OPEN_SSL_VERSION()
 {
