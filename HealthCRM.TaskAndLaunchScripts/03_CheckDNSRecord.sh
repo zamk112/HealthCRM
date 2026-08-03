@@ -11,10 +11,10 @@ check_etc_hosts()
 	local hostName=${2:?check_etc_hosts: Hostname is missing at position 2.}
 	if grep -E "^${ipAddress}[[:space:]]+$hostName$" "$ETC_HOSTS_PATH" >/dev/null 2>&1; then
 		LOG_SUCCESS "DNS entry in /etc/hosts file detected."
-		exit "${EXIT_OK_NO_CONFIG_CHANGE}"
+		exit "$EXIT_OK_NO_CONFIG_CHANGE"
 	else
 		LOG_WARN "DNS entry for $hostName is not bound to any particular service."
-		exit "${EXIT_MISSING_DNS_ENTRY}"
+		exit "$EXIT_MISSING_DNS_ENTRY"
 	fi
 }
 
@@ -103,7 +103,7 @@ check_dns_sd_service_is_running()
 	LOG_VERBOSE "Checking pgrep outputs."
 	if [[ -n "$pgrepStdErr" ]]; then
 		LOG_ERROR "pgrep error: $pgrepStdErr"
-		exit "${EXIT_ENV_ERROR}"
+		exit "$EXIT_ENV_ERROR"
 	elif [[ "$pgrepExit" -eq 0 && -n "$pgrepStdOut" ]]; then
 		LOG_SUCCESS "dns-sd service is running: See output: '$pgrepStdOut'."
 		return 0
@@ -122,7 +122,7 @@ check_dns_sd_service_is_running()
 		return 1
 	else
 		LOG_ERROR "pgrep exited with unexpected code: $pgrepExit"
-		exit "${EXIT_ENV_ERROR}" 
+		exit "$EXIT_ENV_ERROR" 
 	fi
 }
 
@@ -146,7 +146,7 @@ configMalformed=false
 
 while getopts "a:d:e:f:i:l:o:p:s:t:krhv" opt; do
 	case "$opt" in
-		a) ApplicationLayer="${OPTARG// /}" ;;
+		a) ApplicationLayer="$(echo "${OPTARG// /}" | tr "[:upper:]" "[:lower:]")" ;;
 		d) DomainName=${OPTARG// /} ;;
 		e) StandardErrorPath=${OPTARG// /} ;;
 		f) StandardOutPath=${OPTARG// /} ;;
@@ -156,8 +156,8 @@ while getopts "a:d:e:f:i:l:o:p:s:t:krhv" opt; do
 		o) HostName="${OPTARG// /}" ;;
 		p) PortNumber="${OPTARG// /}" ;;
 		r) RunAtLoad=true ;;
-		s) ServiceName="${OPTARG}" ;;
-		t) TransportLayer="${OPTARG// /}" ;;
+		s) ServiceName="$(echo "${OPTARG}" | tr "[:upper:]" "[:lower:]")" ;;
+		t) TransportLayer="$(echo "${OPTARG// /}" | tr "[:upper:]" "[:lower:]")" ;;
 		h) usage; exit "$EXIT_OK" ;;
 		v) ((LOG_LEVEL++)) ;;
 		\?) echo "Unknown Flag: -$OPTARG" >&2; usage >&2 ; exit "$EXIT_USAGE_ERROR" ;;
@@ -181,7 +181,7 @@ else
 	if [[ "$IpAddress" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ ]]; then
 		LOG_SUCCESS "IP Address: '$IpAddress' is valid."
 	else
-		LOG_WARN "IP Address: '$IpAddress' is malformed. IP Address needs to be an IPv4 address."
+		LOG_ERROR "IP Address: '$IpAddress' is malformed. IP Address needs to be an IPv4 address."
 		exit "$EXIT_USAGE_ERROR"
 	fi 
 fi
@@ -316,7 +316,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		else
 			LOG_VERBOSE "Constructing Argument Array from Input Values." 
 			inputProgramArgumentsArr=(
-				"$(echo "$ServiceName" | tr "[:upper:]" "[:lower:]")"
+				"$ServiceName"
 				"_${ApplicationLayer}._${TransportLayer}"
 				"$DomainName"
 				"$PortNumber"
@@ -375,14 +375,14 @@ if [[ "$KERNEL" == "darwin" ]]; then
 			if [ "$matchesOldConfig" = true ]; then
 				LOG_SUCCESS "Input config matches current config."
 				LOG_STEP "Checking if dns-sd Service is running."
-				check_dns_sd_service_is_running "$IpAddress" "$HostName" "$(echo "$ServiceName" | tr "[:upper:]" "[:lower:]")" "_${ApplicationLayer}._${TransportLayer}" "$DomainName" "$PortNumber"
-				exit "${EXIT_OK_NO_CONFIG_CHANGE}"
+				check_dns_sd_service_is_running "$IpAddress" "$HostName" "$ServiceName" "_${ApplicationLayer}._${TransportLayer}" "$DomainName" "$PortNumber"
+				exit "$EXIT_OK_NO_CONFIG_CHANGE"
 			fi
 			LOG_INFO "'matchesOldConfig' config is completed."
 		fi
 	fi
 	LOG_VERBOSE "Checking if all required input has been passed or will check /etc/hosts file for config."
-	if [[ -n "$Label" && -n "$HostName" && -n "$DomainName" && -n "$ServiceName" && -n "$ApplicationLayer" && -n "$TransportLayer" && -n "$PortNumber" && -n "$IpAddress" && -n "$RunAtLoad" && -n "$KeepAlive" && -n "$StandardOutPath" && -n "$StandardErrorPath"  ]]; then
+	if [[ -n "$Label" && -n "$HostName" && -n "$DomainName" && -n "$ServiceName" && -n "$ApplicationLayer" && -n "$TransportLayer" && -n "$PortNumber" && -n "$IpAddress" && -n "$RunAtLoad" && -n "$KeepAlive" && -n "$StandardOutPath" && -n "$StandardErrorPath" ]]; then
 		LOG_VERBOSE "Checking if the Standard Out Path exists."
 		if [[ -d "$StandardOutPath" ]]; then
 			LOG_SUCCESS "Input Standard Out Path exists."
@@ -425,7 +425,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		LOG_INFO "Domain Name from Hostname comparison with Input Domain Name is completed."
 
 		LOG_VERBOSE "Checking Input Transport Layer"
-		if [[ $(echo "$TransportLayer" | tr '[:upper:]' '[:lower:]') == "tcp" ]]; then
+		if [[ "$TransportLayer" == "tcp" ]]; then
 			LOG_SUCCESS "Input transport layer is using the correct protocol, which is TCP."
 		else
 			LOG_WARN "Input transport layer: '$TransportLayer' is not the correct protocol, which is TCP."
@@ -434,7 +434,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		LOG_INFO "Checking Input Transport Layer is completed."
 
 		LOG_VERBOSE "Checking Input Application Layer."
-		if [[ $(echo "$ApplicationLayer" | tr '[:upper:]' '[:lower:]') =~ ^http[s]?$ ]]; then
+		if [[ "$ApplicationLayer" =~ ^http[s]?$ ]]; then
 			LOG_SUCCESS "Input Application Layer protocol: '$ApplicationLayer' is the correct protocol."
 		else
 			LOG_WARN "Input Application Layer protocol: '$ApplicationLayer' is not the correct protocol."
@@ -446,11 +446,9 @@ if [[ "$KERNEL" == "darwin" ]]; then
 		if (( PortNumber >= 0 && PortNumber <= 65535 )); then
 			LOG_SUCCESS "Input Port Number: '$PortNumber' is within the valid range."
 
-			applicationLayer=$(echo "$ApplicationLayer" | tr '[:upper:]' '[:lower:]')
-
-			if [[ "$applicationLayer" == "http" ]] && (( PortNumber == 80 || PortNumber == 8080 )); then
+			if [[ "$ApplicationLayer" == "http" ]] && (( PortNumber == 80 || PortNumber == 8080 )); then
 				LOG_SUCCESS "http protocol is using the correct port number which is '$PortNumber'".
-			elif [[ "$applicationLayer" == "https" ]] && (( PortNumber == 443 )); then
+			elif [[ "$ApplicationLayer" == "https" ]] && (( PortNumber == 443 )); then
 				LOG_SUCCESS "https protocol is using the correct port number which is '$PortNumber'".
 			fi
 		else
@@ -500,7 +498,7 @@ if [[ "$KERNEL" == "darwin" ]]; then
 fi
 
 if [ "$configMalformed" = true ]; then
-	exit "${EXIT_DNS_ABNORMAL_CONFIG}"
+	exit "$EXIT_DNS_ABNORMAL_CONFIG"
 else
-	exit "${EXIT_OK_CONFIG_CHANGE}"
+	exit "$EXIT_OK_CONFIG_CHANGE"
 fi
