@@ -13,8 +13,13 @@ add_etc_hosts_entry()
 	if grep -E "^${ipAddress}[[:space:]]+$hostName$" "$ETC_HOSTS_PATH" >/dev/null 2>&1; then
 		LOG_WARN "Entry Already Exists. Skipping Entry."
 	else
+		LOG_STEP "Making a backup of existing /etc/hosts file."
 		sudo cp "$ETC_HOSTS_PATH" "$ETC_HOSTS_PATH.bak.$(date +%Y%m%d_%H%M%S)"
+		LOG_SUCCESS "Backup of of existing /etc/hosts file is completed."
+
+		LOG_STEP "Amending and adding DNS record into /etc/hosts file."
 		printf '%s\t%s\n' "$hostName" "$ipAddress" | sudo tee -a "$ETC_HOSTS_PATH" >/dev/null
+		LOG_SUCCESS "Addition of DNS record into /etc/hosts file is completed."
 	fi
 	
 	exit "$EXIT_OK"
